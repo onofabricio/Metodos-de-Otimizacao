@@ -70,7 +70,7 @@ def PSO(funcaoObjetivo):
     vMin, vMax = -0.2*(xyMax - xyMin), 0.2*(xyMax - xyMin) #limites de velocidade
     ps = 10 #tamanho da população
     w = 0.9 - ((0.9 - 0.4)/MaxIt) #* np.linspace(0,MaxIt, MaxIt) #inercia
-    c1, c2 = 2, 2 #constantes
+    c1, c2 = 1, 2 #constantes
     
     class Particula():
         
@@ -109,10 +109,14 @@ def PSO(funcaoObjetivo):
     #print(populacao.gbest_posicao, populacao.gbest_custo)
     
     #Iterações com atualização de posições e velocidades
+    gbest = 100000
     for i in range(MaxIt):
         populacao = atualiza_V(populacao, w, c1, c2)
         populacao = atualiza_X(populacao)
         populacao = avaliar(populacao)
+        if gbest > populacao.gbest_custo:
+            gbest = populacao.gbest_custo
+            print("iteração", i, "melhor resultado:", gbest, "posição:", populacao.gbest_posicao)
         
     #Print gbest
     print('melhor resultado:', populacao.gbest_custo)
@@ -120,8 +124,7 @@ def PSO(funcaoObjetivo):
     return       
     
 #Input de função a ser otimizada
-#funcaoObjetivo_input = input("Digite a função a ser otimizada: ")
-funcaoObjetivo_input  = "x^2 + y^2"
+funcaoObjetivo_input = input("Digite a função a ser otimizada: ")
+#funcaoObjetivo_input  = "x^2 + y^2"
 funcaoObjetivo = reconhece_funcao(funcaoObjetivo_input) 
-print(funcaoObjetivo)
 PSO(funcaoObjetivo=funcaoObjetivo)
