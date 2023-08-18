@@ -7,6 +7,7 @@ def reconhece_funcao(expressao):
     
     x = symbols('x')
     y = symbols('y')
+    
     try:
         # Tenta simplificar a expressão fornecida
         simplificada_expressao = simplify(expressao)
@@ -17,7 +18,7 @@ def reconhece_funcao(expressao):
     
     return lambdify([x, y], simplificada_expressao, 'numpy')
  
-def PSO(funcaoObjetivo):
+def PSO(funcaoObjetivo, restricoes):
     
     def define_gbest(populacao):
         
@@ -45,13 +46,12 @@ def PSO(funcaoObjetivo):
             
         return populacao
     
-    
     def avaliar(populacao):
         
         #avaliação de pariculas (atualização de pbest e pbest_custo)
         for particula in populacao.matrix:
             particula.custo = funcaoObjetivo(particula.posicao_x, particula.posicao_y)
-            if particula.pbest_custo > particula.custo:
+            if particula.pbest_custo > particula.custo and all([rest(particula.posicao_x, particula.posicao_y) for rest in restricoes]):
                 particula.pbest_custo = particula.custo
                 particula.pbest_posicao = particula.posicao
                 
@@ -125,6 +125,12 @@ def PSO(funcaoObjetivo):
     
 #Input de função a ser otimizada
 funcaoObjetivo_input = input("Digite a função a ser otimizada: ")
+qtde_restricoes = int(input("Digite quantidade de restrições: "))
+restricoes = []
+for i in range(qtde_restricoes):
+    aux = "Restrição "+str(i+1)+":"
+    restricoes.append(input(aux))
 #funcaoObjetivo_input  = "x^2 + y^2"
-funcaoObjetivo = reconhece_funcao(funcaoObjetivo_input) 
-PSO(funcaoObjetivo=funcaoObjetivo)
+funcaoObjetivo = reconhece_funcao(funcaoObjetivo_input)
+restricoes_tratadas = [reconhece_funcao(rest) for rest in restricoes]
+PSO(funcaoObjetivo=funcaoObjetivo, restricoes = restricoes_tratadas)
