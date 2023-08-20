@@ -29,8 +29,29 @@ def PSO(funcaoObjetivo, restricoes):
                 gbest_posicao = particula.pbest_posicao
                         
         return gbest_custo, gbest_posicao
+        
+    
+    def valida_posicoes(posicao):
+    
+    	if all([rest(posicao[0], posicao[1]) for rest in restricoes]):
+    		return True
+    	else:
+    		return False
     
     
+    def valida_posicoes_iniciais(posicao_x, posicao_y):
+        
+        print("x: ",posicao_x,"y: ", posicao_y)
+        print(not all([rest(posicao_x, posicao_y) for rest in restricoes]))
+    	while not all([rest(posicao_x, posicao_y) for rest in restricoes]):
+    		print("entrou no loop")
+    		posicao_x = np.random.uniform(xyMin, xyMax)
+    		posicao_y = np.random.uniform(xyMin, xyMax)
+    	
+    	print("x: ",posicao_x,"y: ", posicao_y)
+    	return [posicao_x,  posicao_y]
+    	
+    	
     def atualiza_V(populacao, w, c1, c2):
         for particula in populacao.matrix:
             particula.velocidade = w*np.array(particula.velocidade) + c1*random.random()*(np.array(particula.pbest_posicao) - np.array(particula.posicao)) + c2*random.random()*(np.array(populacao.gbest_posicao) - np.array(particula.posicao))
@@ -46,12 +67,13 @@ def PSO(funcaoObjetivo, restricoes):
             
         return populacao
     
+    
     def avaliar(populacao):
         
         #avaliação de pariculas (atualização de pbest e pbest_custo)
         for particula in populacao.matrix:
             particula.custo = funcaoObjetivo(particula.posicao_x, particula.posicao_y)
-            if particula.pbest_custo > particula.custo and all([rest(particula.posicao_x, particula.posicao_y) for rest in restricoes]):
+            if particula.pbest_custo > particula.custo and valida_posicoes(particula.posicao_x, particula.posicao_y):
                 particula.pbest_custo = particula.custo
                 particula.pbest_posicao = particula.posicao
                 
@@ -63,6 +85,7 @@ def PSO(funcaoObjetivo, restricoes):
                 populacao.gbest_posicao = particula.pbest_posicao
         
         return populacao
+    
     
     #Definição de variaveis 
     MaxIt = 2000 #numero de maximo iterações
@@ -79,7 +102,7 @@ def PSO(funcaoObjetivo, restricoes):
             self.id = id
             self.posicao_x = np.random.uniform(xyMin, xyMax)
             self.posicao_y = np.random.uniform(xyMin, xyMax)
-            self.posicao = [self.posicao_x, self.posicao_y]
+            self.posicao = valida_posicoes_iniciais(self.posicao_x, self.posicao_y)
             self.velocidade = [np.random.uniform(vMin, vMax), np.random.uniform(vMin, vMax)]
             self.custo = funcaoObjetivo(self.posicao_x, self.posicao_y) #fitness
             self.pbest_posicao = [self.posicao_x, self.posicao_y]
@@ -97,6 +120,7 @@ def PSO(funcaoObjetivo, restricoes):
 
     #Inicialização
     populacao = []
+    
     for i in range(ps):
         individuo = Particula(id = i)
         populacao.append(individuo)
