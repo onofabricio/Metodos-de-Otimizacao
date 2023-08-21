@@ -86,7 +86,7 @@ def PSO(funcaoObjetivo, restricoes, derivada, hessiana):
         #print(hessian_functions)
         hessian_values = [[func(posicao[0], posicao[1]) for func in row]for row in hessian_functions]
         #print(hessian_values)
-        print(np.all(np.linalg.eigvals(hessian_values) > 0))
+        #print(np.all(np.linalg.eigvals(hessian_values) > 0))
         return np.all(np.linalg.eigvals(hessian_values) > 0)
 
     def atualiza_V(populacao, w, c1, c2):
@@ -130,7 +130,7 @@ def PSO(funcaoObjetivo, restricoes, derivada, hessiana):
     vMin, vMax = -0.2*(xyMax - xyMin), 0.2*(xyMax - xyMin) #limites de velocidade
     ps = 10 #tamanho da população
     w = 0.9 - ((0.9 - 0.4)/MaxIt) #* np.linspace(0,MaxIt, MaxIt) #inercia
-    c1, c2 = 1, 2 #constantes
+    c1, c2 = 1, 1 #constantes
     
     class Particula():
         
@@ -177,7 +177,7 @@ def PSO(funcaoObjetivo, restricoes, derivada, hessiana):
         populacao = avaliar(populacao)
         if gbest > populacao.gbest_custo:
             gbest = populacao.gbest_custo
-            print("iteração", i, "melhor resultado:", "%.2f" %gbest, "posição:", [ '%.2f' % elem for elem in populacao.gbest_posicao])
+            print("iteração", i, "melhor resultado:", "%.3f" %gbest, "posição:", [ '%.3f' % elem for elem in populacao.gbest_posicao])
         
     #Print gbest
     print('melhor resultado:', populacao.gbest_custo)
