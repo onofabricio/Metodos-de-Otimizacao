@@ -1,6 +1,7 @@
 import numpy as np
 import random
 from sympy import symbols, simplify, Symbol, Function, lambdify
+from sympy import *
 
 
 def reconhece_funcao(expressao):
@@ -11,12 +12,34 @@ def reconhece_funcao(expressao):
     try:
         # Tenta simplificar a expressão fornecida
         simplificada_expressao = simplify(expressao)
-        print(simplificada_expressao)
+        dfdx = simplificada_expressao.diff(x)
+        dfdy = simplificada_expressao.diff(y)
+        
+        print("f = ",simplificada_expressao,"\n", 
+              "dfdx = ", dfdx,"\n",
+              "dfdy = ", dfdy)
         
     except:
-        raise('Erro de formatação')
+        print('Erro de formatação')
+    
+    return lambdify([x, y], simplificada_expressao, 'numpy'), lambdify([x, y], dfdx, 'numpy'), lambdify([x, y], dfdy, 'numpy')
+ 
+ 
+def reconhece_restricao(expressao):
+    
+    x = symbols('x')
+    y = symbols('y')
+    
+    try:
+        # Tenta simplificar a expressão fornecida
+        simplificada_expressao = simplify(expressao)
+        print("sujeito a: ",simplificada_expressao,"\n")
+       
+    except:
+        print('Erro de formatação')
     
     return lambdify([x, y], simplificada_expressao, 'numpy')
+ 
  
 def PSO(funcaoObjetivo, restricoes):
     
@@ -32,26 +55,25 @@ def PSO(funcaoObjetivo, restricoes):
         
     
     def valida_posicoes(posicao):
-    
-    	if all([rest(posicao[0], posicao[1]) for rest in restricoes]):
-    		return True
-    	else:
-    		return False
-    
-    
+
+        if not all([rest(posicao[0], posicao[1]) for rest in restricoes]):
+            return True
+        else:
+            return False
+
+
     def valida_posicoes_iniciais(posicao_x, posicao_y):
-        
+
+        #print("x: ",posicao_x,"y: ", posicao_y)
+        #print(not all([rest(posicao_x, posicao_y) for rest in restricoes]))
+        while not all([rest(posicao_x, posicao_y) for rest in restricoes]):
+            posicao_x = np.random.uniform(xyMin, xyMax)
+            posicao_y = np.random.uniform(xyMin, xyMax)
+
         print("x: ",posicao_x,"y: ", posicao_y)
-        print(not all([rest(posicao_x, posicao_y) for rest in restricoes]))
-    	while not all([rest(posicao_x, posicao_y) for rest in restricoes]):
-    		print("entrou no loop")
-    		posicao_x = np.random.uniform(xyMin, xyMax)
-    		posicao_y = np.random.uniform(xyMin, xyMax)
-    	
-    	print("x: ",posicao_x,"y: ", posicao_y)
-    	return [posicao_x,  posicao_y]
-    	
-    	
+        
+        return [posicao_x,  posicao_y]
+
     def atualiza_V(populacao, w, c1, c2):
         for particula in populacao.matrix:
             particula.velocidade = w*np.array(particula.velocidade) + c1*random.random()*(np.array(particula.pbest_posicao) - np.array(particula.posicao)) + c2*random.random()*(np.array(populacao.gbest_posicao) - np.array(particula.posicao))
@@ -73,7 +95,7 @@ def PSO(funcaoObjetivo, restricoes):
         #avaliação de pariculas (atualização de pbest e pbest_custo)
         for particula in populacao.matrix:
             particula.custo = funcaoObjetivo(particula.posicao_x, particula.posicao_y)
-            if particula.pbest_custo > particula.custo and valida_posicoes(particula.posicao_x, particula.posicao_y):
+            if particula.pbest_custo > particula.custo and valida_posicoes([particula.posicao_x, particula.posicao_y]):
                 particula.pbest_custo = particula.custo
                 particula.pbest_posicao = particula.posicao
                 
@@ -148,6 +170,7 @@ def PSO(funcaoObjetivo, restricoes):
     return       
     
 #Input de função a ser otimizada
+x,y,z = symbols('x y z')
 funcaoObjetivo_input = input("Digite a função a ser otimizada: ")
 qtde_restricoes = int(input("Digite quantidade de restrições: "))
 restricoes = []
@@ -155,6 +178,9 @@ for i in range(qtde_restricoes):
     aux = "Restrição "+str(i+1)+":"
     restricoes.append(input(aux))
 #funcaoObjetivo_input  = "x^2 + y^2"
-funcaoObjetivo = reconhece_funcao(funcaoObjetivo_input)
-restricoes_tratadas = [reconhece_funcao(rest) for rest in restricoes]
-PSO(funcaoObjetivo=funcaoObjetivo, restricoes = restricoes_tratadas)
+funcaoObjetivo, dfdx, dfdy = reconhece_funcao(funcaoObjetivo_input)
+restricoes_tratadas = [reconhece_restricao(rest) for rest in restricoes]
+
+
+
+PSO(funcaoObjetivo=dfdx, restricoes = restricoes_tratadas)
