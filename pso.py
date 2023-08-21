@@ -2,7 +2,7 @@ import numpy as np
 import random
 from sympy import symbols, simplify, Symbol, Function, lambdify
 from sympy import *
-
+import sympy
 
 def reconhece_funcao(expressao):
     
@@ -14,15 +14,21 @@ def reconhece_funcao(expressao):
         simplificada_expressao = simplify(expressao)
         dfdx = simplificada_expressao.diff(x)
         dfdy = simplificada_expressao.diff(y)
-        
+        dfdx_ao_quadrado = dfdx ** 2
+        dfdy_ao_quadrado = dfdy ** 2
+        soma_do_quadrado_das_derivadas = dfdx_ao_quadrado + dfdy_ao_quadrado
+        fxx = dfdx.diff(x)
+        fyy = dfdy.diff(y)
+        hessiana = np.array(sympy.matrices.dense.hessian(simplificada_expressao, (x,y), constraints=()))
         print("f = ",simplificada_expressao,"\n", 
               "dfdx = ", dfdx,"\n",
               "dfdy = ", dfdy)
+        print("hessiana: ", hessiana)
         
     except:
         print('Erro de formatação')
     
-    return lambdify([x, y], simplificada_expressao, 'numpy'), lambdify([x, y], dfdx, 'numpy'), lambdify([x, y], dfdy, 'numpy')
+    return lambdify([x, y], simplificada_expressao, 'numpy'), lambdify([x, y], dfdx, 'numpy'), lambdify([x, y], dfdy, 'numpy'), lambdify([x, y], soma_do_quadrado_das_derivadas, 'numpy'), lambdify([x, y], fxx, 'numpy'), lambdify([x, y], fyy, 'numpy'), hessiana
  
  
 def reconhece_restricao(expressao):
@@ -41,22 +47,24 @@ def reconhece_restricao(expressao):
     return lambdify([x, y], simplificada_expressao, 'numpy')
  
  
-def PSO(funcaoObjetivo, restricoes):
+def PSO(funcaoObjetivo, restricoes, derivada, hessiana):
     
     def define_gbest(populacao):
         
         gbest_custo = 100000 #numero deve ser alto para minimização
+        gbest_posicao = [-100, -100]
         for particula in populacao:
             if particula.pbest_custo < gbest_custo:
                 gbest_custo = particula.pbest_custo
                 gbest_posicao = particula.pbest_posicao
+                        
                         
         return gbest_custo, gbest_posicao
         
     
     def valida_posicoes(posicao):
 
-        if not all([rest(posicao[0], posicao[1]) for rest in restricoes]):
+        if all([rest(posicao[0], posicao[1]) for rest in restricoes]):
             return True
         else:
             return False
@@ -64,15 +72,22 @@ def PSO(funcaoObjetivo, restricoes):
 
     def valida_posicoes_iniciais(posicao_x, posicao_y):
 
-        #print("x: ",posicao_x,"y: ", posicao_y)
-        #print(not all([rest(posicao_x, posicao_y) for rest in restricoes]))
         while not all([rest(posicao_x, posicao_y) for rest in restricoes]):
             posicao_x = np.random.uniform(xyMin, xyMax)
             posicao_y = np.random.uniform(xyMin, xyMax)
 
-        print("x: ",posicao_x,"y: ", posicao_y)
         
         return [posicao_x,  posicao_y]
+    
+    def hessianaPositiva(hessiana, posicao):
+        
+        vec_aux = []
+        hessian_functions = [[lambdify([x, y], entry, 'numpy') for entry in row] for row in hessiana.tolist()]
+        #print(hessian_functions)
+        hessian_values = [[func(posicao[0], posicao[1]) for func in row]for row in hessian_functions]
+        #print(hessian_values)
+        print(np.all(np.linalg.eigvals(hessian_values) > 0))
+        return np.all(np.linalg.eigvals(hessian_values) > 0)
 
     def atualiza_V(populacao, w, c1, c2):
         for particula in populacao.matrix:
@@ -95,7 +110,7 @@ def PSO(funcaoObjetivo, restricoes):
         #avaliação de pariculas (atualização de pbest e pbest_custo)
         for particula in populacao.matrix:
             particula.custo = funcaoObjetivo(particula.posicao_x, particula.posicao_y)
-            if particula.pbest_custo > particula.custo and valida_posicoes([particula.posicao_x, particula.posicao_y]):
+            if particula.pbest_custo > particula.custo and valida_posicoes([particula.posicao_x, particula.posicao_y]) and hessianaPositiva(hessiana, [particula.posicao_x, particula.posicao_y]):
                 particula.pbest_custo = particula.custo
                 particula.pbest_posicao = particula.posicao
                 
@@ -162,7 +177,7 @@ def PSO(funcaoObjetivo, restricoes):
         populacao = avaliar(populacao)
         if gbest > populacao.gbest_custo:
             gbest = populacao.gbest_custo
-            print("iteração", i, "melhor resultado:", gbest, "posição:", populacao.gbest_posicao)
+            print("iteração", i, "melhor resultado:", "%.2f" %gbest, "posição:", [ '%.2f' % elem for elem in populacao.gbest_posicao])
         
     #Print gbest
     print('melhor resultado:', populacao.gbest_custo)
@@ -178,9 +193,8 @@ for i in range(qtde_restricoes):
     aux = "Restrição "+str(i+1)+":"
     restricoes.append(input(aux))
 #funcaoObjetivo_input  = "x^2 + y^2"
-funcaoObjetivo, dfdx, dfdy = reconhece_funcao(funcaoObjetivo_input)
+funcaoObjetivo, dfdx, dfdy, soma_do_quadrado_das_derivadas, fxx, fyy, hessiana = reconhece_funcao(funcaoObjetivo_input)
 restricoes_tratadas = [reconhece_restricao(rest) for rest in restricoes]
 
 
-
-PSO(funcaoObjetivo=dfdx, restricoes = restricoes_tratadas)
+PSO(funcaoObjetivo=soma_do_quadrado_das_derivadas, restricoes = restricoes_tratadas, derivada = dfdx, hessiana = hessiana)
