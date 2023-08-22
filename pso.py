@@ -16,8 +16,8 @@ def reconhece_funcao(expressao):
         dfdy = simplificada_expressao.diff(y)
         dfdx_ao_quadrado = dfdx ** 2
         dfdy_ao_quadrado = dfdy ** 2
-        soma_do_quadrado_das_derivadas = dfdx_ao_quadrado + dfdy_ao_quadrado
-        hessiana = np.array(sympy.matrices.dense.hessian(simplificada_expressao, (x,y), constraints=()))
+        soma_do_quadrado_das_derivadas = dfdx_ao_quadrado + dfdy_ao_quadrado #necessário para achar pontos críticos
+        hessiana = np.array(sympy.matrices.dense.hessian(simplificada_expressao, (x,y), constraints=())) # para classificar o ponto critico
         print("f = ",simplificada_expressao,"\n", 
               "dfdx = ", dfdx,"\n",
               "dfdy = ", dfdy)
@@ -25,6 +25,7 @@ def reconhece_funcao(expressao):
         
     except:
         print('Erro de formatação')
+        print('Deve haver pelo menos uma restrição. A função a ser otimizada deve seguir o seguinte formato: \n f(x) = 2x² + 3xy => 2*x^2 + 3*x*y')
     
     return lambdify([x, y], simplificada_expressao, 'numpy'), lambdify([x, y], soma_do_quadrado_das_derivadas, 'numpy'), hessiana
  
@@ -126,7 +127,7 @@ def PSO(funcaoObjetivo, restricoes, hessiana):
     MaxIt = 2000 #numero de maximo iterações
     xyMin, xyMax = -100, 100 #limites numéricos do espaço xy
     vMin, vMax = -0.2*(xyMax - xyMin), 0.2*(xyMax - xyMin) #limites de velocidade
-    ps = 10 #tamanho da população
+    ps = 20 #tamanho da população
     w = 0.9 - ((0.9 - 0.4)/MaxIt) #* np.linspace(0,MaxIt, MaxIt) #inercia
     c1, c2 = 1, 1 #constantes
     
@@ -180,7 +181,7 @@ def PSO(funcaoObjetivo, restricoes, hessiana):
     #Print gbest
     print('melhor resultado:', populacao.gbest_custo)
     print('posição:', populacao.gbest_posicao)
-    return       
+    return populacao.gbest_posicao      
     
 #Input de função a ser otimizada
 x,y,z = symbols('x y z')
@@ -195,8 +196,9 @@ funcaoObjetivo,  soma_do_quadrado_das_derivadas,  hessiana = reconhece_funcao(fu
 restricoes_tratadas = [reconhece_restricao(rest) for rest in restricoes]
 
 
-PSO(funcaoObjetivo=soma_do_quadrado_das_derivadas, restricoes = restricoes_tratadas, hessiana = hessiana)
+melhor_posicao = PSO(funcaoObjetivo=soma_do_quadrado_das_derivadas, restricoes = restricoes_tratadas, hessiana = hessiana)
 
+print("F(x*, y*) = ", funcaoObjetivo(melhor_posicao[0], melhor_posicao[1]))
 #1 check 
 #2 check
 #3 nope
