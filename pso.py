@@ -17,8 +17,6 @@ def reconhece_funcao(expressao):
         dfdx_ao_quadrado = dfdx ** 2
         dfdy_ao_quadrado = dfdy ** 2
         soma_do_quadrado_das_derivadas = dfdx_ao_quadrado + dfdy_ao_quadrado
-        fxx = dfdx.diff(x)
-        fyy = dfdy.diff(y)
         hessiana = np.array(sympy.matrices.dense.hessian(simplificada_expressao, (x,y), constraints=()))
         print("f = ",simplificada_expressao,"\n", 
               "dfdx = ", dfdx,"\n",
@@ -28,7 +26,7 @@ def reconhece_funcao(expressao):
     except:
         print('Erro de formatação')
     
-    return lambdify([x, y], simplificada_expressao, 'numpy'), lambdify([x, y], dfdx, 'numpy'), lambdify([x, y], dfdy, 'numpy'), lambdify([x, y], soma_do_quadrado_das_derivadas, 'numpy'), lambdify([x, y], fxx, 'numpy'), lambdify([x, y], fyy, 'numpy'), hessiana
+    return lambdify([x, y], simplificada_expressao, 'numpy'), lambdify([x, y], soma_do_quadrado_das_derivadas, 'numpy'), hessiana
  
  
 def reconhece_restricao(expressao):
@@ -47,7 +45,7 @@ def reconhece_restricao(expressao):
     return lambdify([x, y], simplificada_expressao, 'numpy')
  
  
-def PSO(funcaoObjetivo, restricoes, derivada, hessiana):
+def PSO(funcaoObjetivo, restricoes, hessiana):
     
     def define_gbest(populacao):
         
@@ -193,8 +191,14 @@ for i in range(qtde_restricoes):
     aux = "Restrição "+str(i+1)+":"
     restricoes.append(input(aux))
 #funcaoObjetivo_input  = "x^2 + y^2"
-funcaoObjetivo, dfdx, dfdy, soma_do_quadrado_das_derivadas, fxx, fyy, hessiana = reconhece_funcao(funcaoObjetivo_input)
+funcaoObjetivo,  soma_do_quadrado_das_derivadas,  hessiana = reconhece_funcao(funcaoObjetivo_input)
 restricoes_tratadas = [reconhece_restricao(rest) for rest in restricoes]
 
 
-PSO(funcaoObjetivo=soma_do_quadrado_das_derivadas, restricoes = restricoes_tratadas, derivada = dfdx, hessiana = hessiana)
+PSO(funcaoObjetivo=soma_do_quadrado_das_derivadas, restricoes = restricoes_tratadas, hessiana = hessiana)
+
+#1 check 
+#2 check
+#3 nope
+#4 check
+#5 check
