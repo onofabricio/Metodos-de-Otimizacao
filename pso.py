@@ -25,7 +25,7 @@ def reconhece_funcao(expressao):
         
     except:
         print('Erro de formatação')
-        print('Deve haver pelo menos uma restrição. A função a ser otimizada deve seguir o seguinte formato: \n f(x) = 2x² + 3xy => 2*x^2 + 3*x*y')
+        print('A função a ser otimizada deve seguir o seguinte formato: \n f(x) = 2x² + 3xy => 2*x^2 + 3*x*y')
     
     return lambdify([x, y], simplificada_expressao, 'numpy'), lambdify([x, y], soma_do_quadrado_das_derivadas, 'numpy'), hessiana
  
@@ -50,7 +50,7 @@ def PSO(funcaoObjetivo, restricoes, hessiana):
     
     def define_gbest(populacao):
         
-        gbest_custo = 100000 #numero deve ser alto para minimização
+        gbest_custo = 100000 #numero deve ser alto para minimização(
         gbest_posicao = [-100, -100]
         for particula in populacao:
             if particula.pbest_custo < gbest_custo:
@@ -125,7 +125,7 @@ def PSO(funcaoObjetivo, restricoes, hessiana):
     
     #Definição de variaveis 
     MaxIt = 2000 #numero de maximo iterações
-    xyMin, xyMax = -100, 100 #limites numéricos do espaço xy
+    xyMin, xyMax = -5, 5 #limites numéricos do espaço xy
     vMin, vMax = -0.2*(xyMax - xyMin), 0.2*(xyMax - xyMin) #limites de velocidade
     ps = 20 #tamanho da população
     w = 0.9 - ((0.9 - 0.4)/MaxIt) #* np.linspace(0,MaxIt, MaxIt) #inercia
@@ -176,7 +176,7 @@ def PSO(funcaoObjetivo, restricoes, hessiana):
         populacao = avaliar(populacao)
         if gbest > populacao.gbest_custo:
             gbest = populacao.gbest_custo
-            print("iteração", i, "melhor resultado:", "%.3f" %gbest, "posição:", [ '%.3f' % elem for elem in populacao.gbest_posicao])
+            print("iteração", i, "melhor resultado:", "%.2f" %gbest, "posição:", [ '%.2f' % elem for elem in populacao.gbest_posicao])
         
     #Print gbest
     print('melhor resultado:', populacao.gbest_custo)
